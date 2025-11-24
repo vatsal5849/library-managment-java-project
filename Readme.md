@@ -218,27 +218,7 @@ Fully responsive mobile UI
 License
 This project may be used, modified, or expanded for learning, academic, or practical applications without restriction.
 
-About
-Smart Library System (Java Project) A simple Java-based tool built to help small libraries move past messy spreadsheets and manual records. It lets librarians manage books, members, and borrowing with less effort, while keeping the setup light, clean, and easy to use.
 
-Resources
- Readme
- Activity
-Stars
- 0 stars
-Watchers
- 0 watching
-Forks
- 0 forks
-Releases
-No releases published
-Create a new release
-Packages
-No packages published
-Publish your first package
-Footer
-© 2025 GitHub, Inc.
-Footer navigation
 Terms
 Privacy
 Security
