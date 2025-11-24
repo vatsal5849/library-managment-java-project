@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Library Book Portal</title>
+    <style>
+        /* Modern and responsive CSS styling using the provided color scheme */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg,#4b79a1 0%,#283e51 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        .header {
+            background: #283e51;
+            color: #fff;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.1rem; }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap; /* Allows tabs to wrap on mobile */
+            background: #f1f1f1;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav-tab {
+            flex-grow: 1;
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #444;
+            font-size: 1rem;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        .nav-tab:hover:not(.active) {
+            background: #e7e7e7;
+        }
+        .nav-tab.active { 
+            color: #4b79a1; 
+            border-bottom: 3px solid #4b79a1; 
+            font-weight: bold; 
+            background: white; 
+        }
+
+        .content { padding: 25px; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Book Grid Layout */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .book-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fff;
+            transition: transform 0.2s;
+        }
+        .book-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .book-card h3 { margin-bottom: 8px; color: #111; font-size: 1.1rem; }
+        .book-card p { color: #555; margin-bottom: 10px; font-size: 0.95rem; }
+        .tag {
+            display: inline-block;
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn { padding: 10px 18px; border-radius: 6px; border: 0; cursor: pointer; font-weight: 600; transition: background-color 0.2s; }
+        .btn-primary { background: #4b79a1; color: #fff; }
+        .btn-primary:hover { background: #3b6287; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-success:hover { background: #1e7e34; }
+
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95rem;
+        }
+
+        /* Message Box for Alerts */
+        .message-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .message-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.6rem; }
+            .nav-tab { padding: 10px 10px; font-size: 0.85rem; }
+            .content { padding: 15px; }
+            .book-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Library Management Portal</h1>
+            <p>Track, add, and manage book inventory.</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-view="catalog" onclick="switchView(this)">Available Books</button>
+            <button class="nav-tab" data-view="manage" onclick="switchView(this)">Admin Management</button>
+            <button class="nav-tab" data-view="issued" onclick="switchView(this)">Borrowed Books</button>
+        </div>
+
+        <div class="content">
+            <!-- Global message display -->
+            <div id="messageDisplay" class="message-box" style="display:none;"></div>
+
+            <!-- Catalog View -->
+            <div id="catalogView" class="view active">
+                <h2>Books Ready to Borrow</h2>
+                <div id="bookGrid" class="book-grid" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Manage View -->
+            <div id="manageView" class="view">
+                <h2>Add a New Book</h2>
+                <form id="bookForm" style="margin-bottom: 30px; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                    <div class="form-group">
+                        <label for="newTitle">Book Title</label>
+                        <input id="newTitle" type="text" placeholder="e.g., The Secret History" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="newAuthor">Author Name</label>
+                        <input id="newAuthor" type="text" placeholder="e.g., Donna Tartt" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="newCategory">Category (e.g., Fiction, Science)</label>
+                        <input id="newCategory" type="text" value="General" required />
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-success" type="submit">Add Book to Inventory</button>
+                    </div>
+                </form>
+
+                <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #eee;">
+
+                <h2>Admin List (Delete Books)</h2>
+                <div id="adminBookGrid" class="book-grid" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Issued View -->
+            <div id="issuedView" class="view">
+                <h2>Currently Borrowed</h2>
+                <div id="issuedList" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CRITICAL FIX: Changed API_BASE to use a relative path /books instead of http://localhost:8080/books 
+        // to resolve "Failed to fetch" errors in the sandboxed environment.
+        const API_BASE = "/books"; 
+
+        /**
+         * Custom function to display success/error messages, replacing alert().
+         */
+        function showMessage(type, text) {
+            const display = document.getElementById('messageDisplay');
+            display.textContent = text;
+            display.className = 'message-box message-' + type;
+            display.style.display = 'block';
+            setTimeout(() => {
+                display.style.display = 'none';
+            }, 3500);
+        }
+
+        /**
+         * Switches the active view (tab) and triggers data loading for that view.
+         */
+        function switchView(tabElement) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            const viewId = tabElement.getAttribute('data-view');
+            document.getElementById(viewId + 'View').classList.add('active');
+            tabElement.classList.add('active');
+
+            if (viewId === 'catalog') loadAvailableBooks();
+            if (viewId === 'manage') loadAllBooksAdmin();
+            if (viewId === 'issued') loadIssuedBooks();
+        }
+
+        // --- Data Loading Functions ---
+
+        /**
+         * Loads all available books for the public catalog view.
+         */
+        async function loadAvailableBooks() {
+            const grid = document.getElementById('bookGrid');
+            grid.innerHTML = '<p>Loading available books...</p>';
+            try {
+                // Fetch from /books/all
+                const response = await fetch(API_BASE + '/all');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const books = await response.json();
+                
+                // Filter client-side for available books
+                const availableBooks = books.filter(b => b.available);
+
+                grid.innerHTML = '';
+                if (availableBooks.length === 0) {
+                    grid.innerHTML = '<p style="color:#888;">🥳 The shelves are empty! No available books right now.</p>';
+                    return;
+                }
+
+                availableBooks.forEach(b => {
+                    const card = document.createElement('div');
+                    card.className = 'book-card';
+                    card.innerHTML = `
+                        <span class="tag">${b.category || 'N/A'}</span>
+                        <h3>${b.title}</h3>
+                        <p>Author: ${b.author}</p>
+                        <button class="btn btn-primary" onclick="borrowBook(${b.id})">Borrow</button>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Fetch error for available books:", error);
+                grid.innerHTML = '<p class="message-error">Could not fetch available book data. Please check the backend connection.</p>';
+            }
+        }
+
+        /**
+         * Loads all books (available and borrowed) for the Admin view.
+         */
+        async function loadAllBooksAdmin() {
+            const grid = document.getElementById('adminBookGrid');
+            grid.innerHTML = '<p>Loading all inventory records...</p>';
+            try {
+                // Fetch from /books/all
+                const response = await fetch(API_BASE + '/all');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const books = await response.json();
+
+                grid.innerHTML = '';
+                if (books.length === 0) {
+                    grid.innerHTML = '<p style="color:#888;">The database is currently empty.</p>';
+                    return;
+                }
+
+                books.forEach(b => {
+                    const statusClass = b.available ? 'btn-success' : 'btn-danger';
+                    const statusText = b.available ? 'Available' : 'Borrowed';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'book-card';
+                    card.innerHTML = `
+                        <span class="tag">${b.category || 'N/A'}</span>
+                        <h3>${b.title}</h3>
+                        <p>By: ${b.author} (ID: ${b.id})</p>
+                        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap: wrap;">
+                            <button class="btn ${statusClass}" disabled>${statusText}</button>
+                            <button class="btn btn-danger" onclick="deleteBook(${b.id})">Remove Permanently</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Fetch error for admin list:", error);
+                grid.innerHTML = '<p class="message-error">Could not load full inventory list.</p>';
+            }
+        }
+        
+        /**
+         * Loads the list of currently borrowed books.
+         */
+        async function loadIssuedBooks() {
+            const list = document.getElementById('issuedList');
+            list.innerHTML = '<p>Loading borrowed books...</p>';
+            try {
+                // Fetch from /books/all
+                const response = await fetch(API_BASE + '/all');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const books = await response.json();
+                
+                // Filter client-side for borrowed books
+                const issuedBooks = books.filter(b => !b.available);
+
+                list.innerHTML = '';
+                if (issuedBooks.length === 0) {
+                    list.innerHTML = '<p style="color:#888;">All books accounted for! The issued list is clear.</p>';
+                    return;
+                }
+
+                issuedBooks.forEach(b => {
+                    const item = document.createElement('div');
+                    item.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa;";
+                    item.innerHTML = `
+                        <div>
+                            <strong>${b.title}</strong> by <em>${b.author}</em>
+                            <span style="color:#999;font-size:0.8rem;margin-left:8px;">(ID: ${b.id})</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="returnBook(${b.id})">Return Book</button>
+                    `;
+                    list.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error("Fetch error for issued list:", error);
+                list.innerHTML = '<p class="message-error">Error fetching borrowed book data.</p>';
+            }
+        }
+
+        // --- CRUD / Action Functions ---
+
+        /**
+         * Adds a new book to the inventory.
+         */
+        document.getElementById('bookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('newTitle').value;
+            const author = document.getElementById('newAuthor').value;
+            const category = document.getElementById('newCategory').value;
+
+            // Only 'id', 'title', 'author', and 'available' are expected by the provided backend Book model
+            const payload = { title, author, available: true, category }; 
+
+            try {
+                // POST to /books/add
+                const res = await fetch(API_BASE + '/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    showMessage('success', `${title} added successfully!`);
+                    e.target.reset();
+                    loadAllBooksAdmin(); // Refresh admin list
+                    loadAvailableBooks(); // Refresh available list
+                } else {
+                    showMessage('error', 'Failed to add book. Server status: ' + res.status);
+                }
+
+            } catch (error) {
+                showMessage('error', 'Network error or server connection failed.');
+                console.error("Add Book Error:", error);
+            }
+        });
+
+        /**
+         * Deletes a book from the inventory.
+         */
+        async function deleteBook(id) {
+            // Using confirm dialog instead of custom modal for simplicity in a single file
+            if (!window.confirm(`Are you sure you want to permanently remove Book ID ${id}? This cannot be undone.`)) return; 
+
+            try {
+                // DELETE to /books/{id}
+                const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                
+                if (res.ok) {
+                    showMessage('success', `Book ID ${id} removed!`);
+                    loadAllBooksAdmin(); 
+                    loadAvailableBooks(); 
+                    loadIssuedBooks();
+                } else {
+                    showMessage('error', 'Failed to remove book. Server status: ' + res.status);
+                }
+
+            } catch (error) {
+                showMessage('error', 'Network error during delete operation.');
+                console.error("Delete Book Error:", error);
+            }
+        }
+
+        /**
+         * Marks a book as not available (borrowed).
+         */
+        async function borrowBook(id) {
+            if (!window.confirm(`Confirm borrowing Book ID ${id}?`)) return;
+            
+            try {
+                // 1. Fetch current book state (GET /books/{id})
+                const bookRes = await fetch(`${API_BASE}/${id}`);
+                const book = await bookRes.json();
+                
+                if (!book) throw new Error("Book not found.");
+                if (!book.available) throw new Error("Book is already borrowed.");
+                
+                // 2. Update state and PUT back (PUT /books/{id})
+                book.available = false;
+                
+                const updateRes = await fetch(`${API_BASE}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(book)
+                });
+
+                if (updateRes.ok) {
+                    showMessage('success', `Book ID ${id} borrowed successfully!`);
+                    loadAvailableBooks();
+                    loadIssuedBooks();
+                } else {
+                    showMessage('error', 'Borrow failed. Could not update record.');
+                }
+            } catch (error) {
+                showMessage('error', 'Operation failed: ' + error.message);
+                console.error("Borrow Book Error:", error);
+            }
+        }
+
+        /**
+         * Marks a book as available (returned).
+         */
+        async function returnBook(id) {
+            if (!window.confirm(`Confirm returning Book ID ${id}?`)) return;
+
+            try {
+                // 1. Fetch current book state (GET /books/{id})
+                const bookRes = await fetch(`${API_BASE}/${id}`);
+                const book = await bookRes.json();
+
+                if (!book) throw new Error("Book not found.");
+                if (book.available) throw new Error("Book is not currently borrowed.");
+
+                // 2. Update state and PUT back (PUT /books/{id})
+                book.available = true; 
+
+                const updateRes = await fetch(`${API_BASE}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(book)
+                });
+
+                if (updateRes.ok) {
+                    showMessage('success', `Book ID ${id} returned successfully!`);
+                    loadAvailableBooks();
+                    loadIssuedBooks();
+                } else {
+                    showMessage('error', 'Return failed. Could not update record.');
+                }
+            } catch (error) {
+                showMessage('error', 'Operation failed: ' + error.message);
+                console.error("Return Book Error:", error);
+            }
+        }
+
+        // Initial load on page ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load initial data for the default view (Catalog)
+            loadAvailableBooks();
+            // Pre-load issued list in the background for a better UX when switching tabs
+            loadIssuedBooks(); 
+        });
+    </script>
+</body>
+</html>
